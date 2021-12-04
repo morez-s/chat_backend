@@ -1,7 +1,9 @@
 var express = require('express');
 var router = express.Router();
 
-//
+// require controllers functions
+const authRouter = require('./../app/controllers/auth');
 
-//export this router to use in our index.js
+router.use('/', authRouter);
+
 module.exports = router;
