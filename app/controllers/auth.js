@@ -5,14 +5,14 @@ var authRouter = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-authRouter.post("/registration", async (req, res) => {
+authRouter.post('/registration', async (req, res) => {
   try {
     // Get user input
     const { username, password } = req.body.params;
 
     // Validate user input
     if (!(username && password)) {
-      res.status(422).send("Username and password is required");
+      return res.status(422).send('Username and password is required');
     }
 
     // check if user already exist
@@ -27,7 +27,7 @@ authRouter.post("/registration", async (req, res) => {
       }
     });
     if (existingUser.hits.hits.length) {
-      return res.status(409).send("User already exists");
+      return res.status(409).send('User already exists');
     }
 
     //Encrypt user password
@@ -39,7 +39,7 @@ authRouter.post("/registration", async (req, res) => {
       body: {
         username,
         password: encryptedPassword,
-        onlineStatus: 'online'
+        online_status: 'online'
       }
     });
 
@@ -48,7 +48,7 @@ authRouter.post("/registration", async (req, res) => {
       { user_id: user._id, username },
       process.env.TOKEN_KEY,
       {
-        expiresIn: "2h",
+        expiresIn: '2h',
       }
     );
 
@@ -56,7 +56,69 @@ authRouter.post("/registration", async (req, res) => {
     user.token = token;
 
     // return new user
-    res.status(200).json(user);
+    return res.status(200).json(user);
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+authRouter.post('/login', async (req, res) => {
+  try {
+    // Get user input
+    const { username, password } = req.body.params;
+
+    // Validate user input
+    if (!(username && password)) {
+      return res.status(422).send('Username and password is required');
+    }
+    // check if user exist in our database
+    let user = await elasticClient.search({
+      index: 'users',
+      body: {
+        query: {
+          match: {
+            username
+          }
+        }
+      }
+    });
+    const userId = user.hits.hits[0]._id;
+    user = user.hits.hits[0]._source;
+
+    // check password
+    const passwordCheck = await bcrypt.compare(password, user.password);
+    if (user && passwordCheck) {
+      // Create token
+      const token = jwt.sign(
+        { user_id: userId, username },
+        process.env.TOKEN_KEY,
+        {
+          expiresIn: '2h',
+        }
+      );
+
+      // save user token
+      user.token = token;
+
+      // update user online status
+      elasticClient.update({
+        index: 'users',
+        id: userId,
+        body: {
+          doc: {
+            online_status: 'online'
+          }
+        }
+      });
+
+      // save user online status
+      user.online_status = 'online';
+
+      // return user information
+      return res.status(200).json(user);
+    }
+
+    return res.status(401).send('Incorrect username or password');
   } catch (err) {
     console.log(err);
   }
