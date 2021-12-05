@@ -57,7 +57,11 @@ chatController.get('/users/:receiverUserId/messages', authMiddleware, async (req
               }
             ]
           }
-        }
+        },
+
+        sort: [
+          { 'timestamp.raw': { order: 'desc' } }
+        ]
       }
     });
 
