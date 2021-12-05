@@ -6,12 +6,12 @@ const authMiddleware = (req, res, next) => {
 
   // check if user is logged in 
   if (!bearerToken) {
-    return res.status(401).send('Unauthenticated user');
+    return res.status(401).send('ابتدا باید وارد حساب کاربری شوید');
   }
 
   jwt.verify(bearerToken.substr(7), process.env.TOKEN_KEY, function(err, decodedToken) {
     if (err) {
-      return res.status(401).send('Incorrect user token');
+      return res.status(401).send('توکن موجود نیست');
     }
   });
 

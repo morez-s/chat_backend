@@ -9,11 +9,16 @@ const jwt = require('jsonwebtoken');
 authController.post('/registration', async (req, res) => {
   try {
     // Get user input
-    const { username, password } = req.body.params;
+    const { username, password, password_confirmation } = req.body.params;
 
     // Validate user input
-    if (!(username && password)) {
-      return res.status(422).send('Username and password is required');
+    if (!(username && password && password_confirmation)) {
+      return res.status(422).send('وارد کردن تمام فیلدها الزامی است');
+    }
+
+    // validate password and password confirmation
+    if (password != password_confirmation) {
+      return res.status(422).send('تکرار رمز عبور اشتباه وارد شده است')
     }
 
     // check if user already exist
@@ -28,7 +33,7 @@ authController.post('/registration', async (req, res) => {
       }
     });
     if (existingUser.hits.hits.length) {
-      return res.status(409).send('User already exists');
+      return res.status(409).send('نام کاربری قبلا انتخاب شده است');
     }
 
     //Encrypt user password
@@ -70,7 +75,7 @@ authController.post('/login', async (req, res) => {
 
     // Validate user input
     if (!(username && password)) {
-      return res.status(422).send('Username and password is required');
+      return res.status(422).send('وارد کردن نام کاربری و کلمه عبور الزامی است');
     }
     
     // check if user exist in our database
@@ -120,7 +125,7 @@ authController.post('/login', async (req, res) => {
       return res.status(200).json(user);
     }
 
-    return res.status(401).send('Incorrect username or password');
+    return res.status(401).send('نام کاربری یا کلمه عبور اشتباه است');
   } catch (err) {
     console.log(err);
   }
@@ -149,7 +154,7 @@ authController.delete('/logout', authMiddleware, async (req, res) => {
     });
 
     // return response
-    return res.status(200).send('Successfully logged out');
+    return res.status(200).send('کاربر با موفقیت از حساب کاربری خود خارج شد');
   } catch (err) {
     console.log(err);
   }

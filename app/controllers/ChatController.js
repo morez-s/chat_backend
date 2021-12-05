@@ -79,7 +79,7 @@ chatController.post('/users/:receiverUserId/messages', authMiddleware, async (re
 
     // Validate user input
     if (!(text)) {
-      return res.status(422).send('Message is required');
+      return res.status(422).send('وارد کردن متن پیام الزامی است');
     }
 
     // get senderUserId from bearer token sent in request headers
