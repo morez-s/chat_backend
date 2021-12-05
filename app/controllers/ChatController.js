@@ -20,6 +20,54 @@ chatController.get('/users', authMiddleware, async (req, res) => {
   }
 });
 
+chatController.get('/users/:receiverUserId/messages', authMiddleware, async (req, res) => {
+  try {
+    // get senderUserId from bearer token sent in request headers
+    let senderUserId;
+    jwt.verify(req.headers.authorization.substr(7), process.env.TOKEN_KEY, function(err, decodedToken) {
+      senderUserId = decodedToken.user_id;
+    });
+
+    // get receiverUserId from URL parameteres
+    const receiverUserId = req.params.receiverUserId;
+
+    // get messages list sent and received by the current two users
+    const messagesList = await elasticClient.search({
+      index: 'messages',
+      body: {
+        query: {
+          bool: {
+            should: [
+              {
+                bool: {
+                  must: [
+                    { match: { sender_user_id: senderUserId }},
+                    { match: { receiver_user_id: receiverUserId }}
+                  ]
+                }
+              },
+
+              {
+                bool: {
+                  must: [
+                    { match: { sender_user_id: receiverUserId }},
+                    { match: { receiver_user_id: senderUserId }}
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    });
+
+    // return new message
+    return res.status(200).json(messagesList.hits.hits);
+  } catch (err) {
+    console.log(err);
+  }
+});
+
 chatController.post('/users/:receiverUserId/messages', authMiddleware, async (req, res) => {
   try {
     // Get user input
