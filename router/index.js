@@ -2,8 +2,8 @@ var express = require('express');
 var router = express.Router();
 
 // require controllers functions
-const authRouter = require('./../app/controllers/auth');
+const authController = require('./../app/controllers/AuthController');
 
-router.use('/', authRouter);
+router.use('/', authController);
 
 module.exports = router;

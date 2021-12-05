@@ -1,11 +1,12 @@
 var express = require('express');
 const elasticClient = require('./../../config/database');
-var authRouter = express.Router();
+var authController = express.Router();
+var authMiddleware = require('./../middlewares/AuthMiddleware');
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-authRouter.post('/registration', async (req, res) => {
+authController.post('/registration', async (req, res) => {
   try {
     // Get user input
     const { username, password } = req.body.params;
@@ -62,7 +63,7 @@ authRouter.post('/registration', async (req, res) => {
   }
 });
 
-authRouter.post('/login', async (req, res) => {
+authController.post('/login', async (req, res) => {
   try {
     // Get user input
     const { username, password } = req.body.params;
@@ -124,4 +125,39 @@ authRouter.post('/login', async (req, res) => {
   }
 });
 
-module.exports = authRouter;
+authController.delete('/logout', authMiddleware, async (req, res) => {
+  try {
+    // initialize userId
+    let userId;
+
+    // get userId from bearer token sent in request headers
+    jwt.verify(req.headers.authorization.substr(7), process.env.TOKEN_KEY, function(err, decodedToken) {
+      if (err) {
+        return res.status(401).send('Incorrect user token');
+      }
+
+      // get userId
+      userId = decodedToken.user_id;
+
+      // destroy user token
+    });
+
+    // update user online status
+    elasticClient.update({
+      index: 'users',
+      id: userId,
+      body: {
+        doc: {
+          online_status: 'offline'
+        }
+      }
+    });
+
+    // return response
+    return res.status(200).send('Successfully logged out');
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+module.exports = authController;
