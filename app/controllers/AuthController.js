@@ -72,6 +72,7 @@ authController.post('/login', async (req, res) => {
     if (!(username && password)) {
       return res.status(422).send('Username and password is required');
     }
+    
     // check if user exist in our database
     let user = await elasticClient.search({
       index: 'users',
@@ -127,15 +128,9 @@ authController.post('/login', async (req, res) => {
 
 authController.delete('/logout', authMiddleware, async (req, res) => {
   try {
-    // initialize userId
-    let userId;
-
     // get userId from bearer token sent in request headers
+    let userId;
     jwt.verify(req.headers.authorization.substr(7), process.env.TOKEN_KEY, function(err, decodedToken) {
-      if (err) {
-        return res.status(401).send('Incorrect user token');
-      }
-
       // get userId
       userId = decodedToken.user_id;
 
