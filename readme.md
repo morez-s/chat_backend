@@ -3,7 +3,8 @@ This application serves necessary APIs for signing up in the chat application an
 
 # Technologies
 Database: Elasticsearch 7.15.2 <br />
-Server: Nodejs 16.13.0 <br />
+Server: NodeJS 16.13.0 <br />
+NodeJS Framework: ExpressJS 4.17.2 <br />
 
 # Config
 * .env <br />
